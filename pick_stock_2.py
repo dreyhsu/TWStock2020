@@ -8,19 +8,24 @@ import talib
 import sqlite3
 import time
 import matplotlib.pyplot as plt
+from stock_db import id_list, fetch_db
+import pandas as pd
+
+
+path = 'C:/sqlite/stock.db'
 
 def fig_plot(df, stock_id, pic_folder):
-    n = -120
+    n = -200
     closes = np.array(df['Close'].iloc[n:].tolist())
     highs = np.array(df['High'].iloc[n:].tolist())
     lows = np.array(df['Low'].iloc[n:].tolist())
     opens = np.array(df['Open'].iloc[n:].tolist())
-    Time = np.array(df['Date'].iloc[n:].tolist())
+    Time = np.array(df['Date'].map(lambda x: str(x)).iloc[n:].tolist())
     Vol = np.array(df['Volume'].iloc[n:].tolist())
     #use talib pakage to calculate SMA series
-    avg5 = talib.SMA(closes, timeperiod=5)
     avg60 = talib.SMA(closes, timeperiod=60)
     avg120 = talib.SMA(closes, timeperiod=120)
+    avg150 = talib.SMA(closes, timeperiod=150)
     #create plot figure
     fig = plt.figure()
     ax1 = plt.subplot(2,1,1)
@@ -30,9 +35,9 @@ def fig_plot(df, stock_id, pic_folder):
     ax1.set_xticklabels(Time[::10], rotation=40)
     mpf.candlestick2_ochl(ax1, opens, closes, highs, lows, width=0.6, colorup='r', colordown='g')
     #SMA line
-    ax1.plot(avg5, 'g', label='MA5')
-    ax1.plot(avg60, 'k--', label='MA60')
-    ax1.plot(avg120, 'k.', label='MA120')
+    ax1.plot(avg60, 'g', label='MA60')
+    ax1.plot(avg120, 'k--', label='MA120')
+    ax1.plot(avg150, 'k.', label='MA150')
     #價量結構
     for n in [10, 50]:
         MaxVolClose = df['Close'].iloc[df['Volume'].iloc[-n:].idxmax()]
@@ -101,15 +106,16 @@ def pick_day_stock():
     def above_ma5_closeunder20(df, TargetPrice):
         try:
             close = df['Close']
-            avg5 = talib.SMA(close, timeperiod=5)
-            avg20 = talib.SMA(close, timeperiod=20)
             avg60 = talib.SMA(close, timeperiod=60)
-            df['MA5'] = avg5
-            df['MA20'] = avg20
+            avg120 = talib.SMA(close, timeperiod=120)
+            avg150 = talib.SMA(close, timeperiod=150)
             df['MA60'] = avg60
-            if df['Volume'].iloc[-1] > 200000 and TargetPrice > df['Close'].iloc[-1] > df['MA5'].iloc[-1] \
-                    and df['MA5'].iloc[-1] > df['MA5'].iloc[-2] and df['MA20'].iloc[-1] > df['MA20'].iloc[-2]\
-                    and df['MA60'].iloc[-1] > df['MA60'].iloc[-2]:
+            df['MA120'] = avg120
+            df['MA150'] = avg150
+            if df['Volume'].iloc[-1] > 200000 and TargetPrice >= df['Close'].iloc[-1] \
+                    and df['MA60'].iloc[-1] > df['MA60'].iloc[-2] and df['MA120'].iloc[-1] > df['MA120'].iloc[-2]\
+                    and df['MA150'].iloc[-1] > df['MA150'].iloc[-2] and df['MA60'].iloc[-1] > df['MA120'].iloc[-1] \
+                    > df['MA150'].iloc[-1]:
                 return True
         except (IndexError, np.linalg.linalg.LinAlgError):
             return False
@@ -132,24 +138,20 @@ def pick_day_stock():
                 print('Failed to delete %s. Reason: %s' % (file_path, e))
 
     #Make stock ID list
-    dbpath = "C:/Users/user/Documents/stocks/"
-    lstFiles = os.listdir(dbpath)
-    for stock_id in lstFiles:
-        try:
-            """Connect to database"""
-            conn = sqlite3.connect(dbpath + stock_id)
-            c = conn.cursor()
-            c.execute("SELECT 'Date' FROM price ORDER BY 'Date' DESC")
-            conn.commit()
-            df = pd.read_sql(con=conn, sql="SELECT * FROM price")
-            conn.close()
-            if above_ma5_closeunder20(df, TargetPrice=15):
-                fig_plot(df, stock_id, pic_folder='for_drey')
-            if above_ma5_closeunder20(df, TargetPrice=70):
-                fig_plot(df, stock_id, pic_folder='for_mandy')
+    table_list = ['price', 'te_price']
+    for table in table_list:
+        lstFiles = id_list(table)
+        for stock_id in lstFiles:
+            print(stock_id)
+            try:
+                df = fetch_db(stock_id, table)
+                # if above_ma5_closeunder20(df, TargetPrice=15):
+                #     fig_plot(df, stock_id, pic_folder='for_drey')
+                if above_ma5_closeunder20(df, TargetPrice=70):
+                    fig_plot(df, stock_id, pic_folder='for_mandy')
 
-        except FileNotFoundError:
-            print("{} is not found.".format(str(stock_id)))
+            except FileNotFoundError:
+                print("{} is not found.".format(str(stock_id)))
 
 
 if __name__ == '__main__':
