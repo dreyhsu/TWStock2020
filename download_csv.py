@@ -36,9 +36,9 @@ def main():
     start = str(last_date)
     # start = '20181023'
     print("start day is {}".format(start))
-    # end = datetime.datetime.now().strftime("%Y%m%d")
-    end = '20200501'
-    # print("End day is {}".format(end))
+    end = datetime.datetime.now().strftime("%Y%m%d")
+    # end = '20200925'
+    print("End day is {}".format(end))
     if end > start:
         date_list = date_range(start, end)
         print('We will download : from {} to {}'.format(date_list[0], date_list[-1]))
