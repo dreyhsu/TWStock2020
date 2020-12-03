@@ -4,7 +4,7 @@ from crawler import crawler, crawler_te
 import sqlite3
 import pandas as pd
 
-path = 'C:/sqlite/stock.db'
+path = 'db/stock.db'
 
 
 def trans_date(date_time):
@@ -37,7 +37,7 @@ def main():
     # start = '20181023'
     print("start day is {}".format(start))
     end = datetime.datetime.now().strftime("%Y%m%d")
-    # end = '20200925'
+    # end = '20201115'
     print("End day is {}".format(end))
     if end > start:
         date_list = date_range(start, end)

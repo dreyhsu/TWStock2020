@@ -12,9 +12,9 @@ from stock_db import id_list, fetch_db
 import pandas as pd
 
 
-path = 'C:/sqlite/stock.db'
+path = 'db/stock.db'
 
-def fig_plot(df, stock_id, pic_folder):
+def fig_plot(df, stock_id):
     n = -200
     closes = np.array(df['Close'].iloc[n:].tolist())
     highs = np.array(df['High'].iloc[n:].tolist())
@@ -32,7 +32,7 @@ def fig_plot(df, stock_id, pic_folder):
     ax2 = plt.subplot(2,1,2)
     #x label range
     ax1.set_xticks(range(0, len(Time), 15))
-    ax1.set_xticklabels(Time[::10], rotation=40)
+    # ax1.set_xticklabels(Time[::10], rotation=20)
     mpf.candlestick2_ochl(ax1, opens, closes, highs, lows, width=0.6, colorup='r', colordown='g')
     #SMA line
     ax1.plot(avg60, 'g', label='MA60')
@@ -49,7 +49,7 @@ def fig_plot(df, stock_id, pic_folder):
     #成交量
     ax2.bar(Time, Vol ,color='b')
     ax2.set_xticks(range(0, len(Time), 15))
-    ax2.set_xticklabels(Time[::10], rotation=40)
+    # ax2.set_xticklabels(Time[::10], rotation=40)
     #圖片網紋
     ax1.grid(True, ls=':', color='k', alpha=0.5)
     ax2.grid(True, ls=':', color='k', alpha=0.5)
@@ -58,7 +58,9 @@ def fig_plot(df, stock_id, pic_folder):
     plt.title(stock_id)
     plt.subplots_adjust(wspace=0, hspace=0)
     ax1.legend(loc = 'best')
-    fig_path = 'C:/Users/user/Pictures/'+pic_folder+'/' + stock_id.split('.')[0] + '.png'
+
+    fig_path = 'C:/Users/Drey/Pictures/uptrend/'+ stock_id.split('.')[0] + '.png'
+    # fig_path = '/home/drey/stockgallery/media/images/' + stock_id.split('.')[0] + '.png'
     plt.savefig(fig_path)
     plt.close()
 
@@ -82,7 +84,7 @@ def fig_plot(df, stock_id, pic_folder):
 
 # class Stock:
 #     def __init__(self, stock_id):
-#         conn = sqlite3.connect("C:/Users/user/Documents/stocks/{}.db".format(stock_id))
+#         conn = sqlite3.connect("C:/Users/Drey/Documents/stocks/{}.db".format(stock_id))
 #         c = conn.cursor()
 #         c.execute("SELECT 'Date' FROM price ORDER BY 'Date' DESC")
 #         conn.commit()
@@ -112,7 +114,7 @@ def pick_day_stock():
             df['MA60'] = avg60
             df['MA120'] = avg120
             df['MA150'] = avg150
-            if df['Volume'].iloc[-1] > 200000 and TargetPrice >= df['Close'].iloc[-1] \
+            if df['Volume'].iloc[-1] > 200000  \
                     and df['MA60'].iloc[-1] > df['MA60'].iloc[-2] and df['MA120'].iloc[-1] > df['MA120'].iloc[-2]\
                     and df['MA150'].iloc[-1] > df['MA150'].iloc[-2] and df['MA60'].iloc[-1] > df['MA120'].iloc[-1] \
                     > df['MA150'].iloc[-1]:
@@ -123,19 +125,19 @@ def pick_day_stock():
             return False
 
     #deal with folders
-    for Folders in ['for_drey', 'for_mandy']:
-        folder = 'C:/Users/user/Pictures/'+Folders
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        for filename in os.listdir(folder):
-            file_path = os.path.join(folder, filename)
-            try:
-                if os.path.isfile(file_path) or os.path.islink(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-            except Exception as e:
-                print('Failed to delete %s. Reason: %s' % (file_path, e))
+    # folder = '/home/drey/stockgallery/media/images/'
+    folder = 'C:/Users/Drey/Pictures/uptrend'
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
 
     #Make stock ID list
     table_list = ['price', 'te_price']
@@ -148,7 +150,7 @@ def pick_day_stock():
                 # if above_ma5_closeunder20(df, TargetPrice=15):
                 #     fig_plot(df, stock_id, pic_folder='for_drey')
                 if above_ma5_closeunder20(df, TargetPrice=70):
-                    fig_plot(df, stock_id, pic_folder='for_mandy')
+                    fig_plot(df, stock_id)
 
             except FileNotFoundError:
                 print("{} is not found.".format(str(stock_id)))
